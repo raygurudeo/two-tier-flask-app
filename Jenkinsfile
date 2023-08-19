@@ -8,12 +8,18 @@ pipeline {
         }
         stage("Build & Test") {
             steps {
+                sh "docker build . --rm -t two-tier-flask-app"
                 echo "Code Built And Tested"
             }
         }
         stage("Push To Repository") {
             steps {
-                echo "Image Pushed To Repository"
+                withCredentials([usernamePassword(credentialsId:"dockerhub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
+                    sh "docker tag node-todo-cicd ${env.dockerHubUser}/two-tier-flask-app:latest"
+                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
+                    sh "docker push ${env.dockerHubUser}/two-tier-flask-app:latest"
+                    echo "Image pushed to Dockerhub"
+                }
             }
         }
         stage("Deploy") {
